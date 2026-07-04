@@ -95,17 +95,19 @@ loader.load('model.glb',gltf=>{
 
 // === AMBIENT AUDIO ===
 const ambient=new Audio('ambient.mp3');
-ambient.loop=true;ambient.volume=0;
+ambient.loop=true;ambient.volume=0;ambient.preload='auto';ambient.load();
 let audioStarted=false;
 
-document.addEventListener('click',()=>{
+function tryPlay(){
   if(!audioStarted){
     ambient.play().then(()=>{
       audioStarted=true;
-      // Fade in over 3s
       let vol=0;const fade=setInterval(()=>{vol+=.01;if(vol>=.4){vol=.4;clearInterval(fade)}ambient.volume=vol},75);
     }).catch(()=>{});
   }
+}
+document.addEventListener('click',tryPlay);
+document.addEventListener('touchstart',tryPlay,{once:true});
 });
 
 function animate(){
