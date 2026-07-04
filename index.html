@@ -87,8 +87,6 @@ loader.load('model.glb',gltf=>{
   model.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true}});
   scene.add(model);
   document.getElementById('loader').classList.add('hidden');
-  // Try starting audio (works if user already clicked)
-  if(ctxReady)startAmbient();
   },remaining);
 },p=>{
   const pct=Math.round(p.loaded/p.total*100);
@@ -96,46 +94,19 @@ loader.load('model.glb',gltf=>{
 });
 
 // === AMBIENT AUDIO ===
-let audioCtx=null,ctxReady=false,ambientOn=false;
+const ambient=new Audio('ambient.mp3');
+ambient.loop=true;ambient.volume=0;
+let audioStarted=false;
 
-// Step 1: Create & resume AudioContext on first user click
 document.addEventListener('click',()=>{
-  if(!audioCtx){
-    try{
-      audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-      audioCtx.resume().then(()=>{ctxReady=true;if(!ambientOn)startAmbient();});
-    }catch(e){}
-  }else if(audioCtx.state==='suspended'){
-    audioCtx.resume();
+  if(!audioStarted){
+    ambient.play().then(()=>{
+      audioStarted=true;
+      // Fade in over 3s
+      let vol=0;const fade=setInterval(()=>{vol+=.01;if(vol>=.4){vol=.4;clearInterval(fade)}ambient.volume=vol},75);
+    }).catch(()=>{});
   }
-},{once:false});
-
-function startAmbient(){
-  if(ambientOn||!ctxReady||!audioCtx)return;
-  try{
-    const now=audioCtx.currentTime;
-    const osc1=audioCtx.createOscillator();osc1.type='sine';osc1.frequency.setValueAtTime(55,now);
-    const g1=audioCtx.createGain();g1.gain.setValueAtTime(0,now);g1.gain.linearRampToValueAtTime(.08,now+2);
-    osc1.connect(g1);g1.connect(audioCtx.destination);osc1.start();
-
-    const osc2=audioCtx.createOscillator();osc2.type='sine';osc2.frequency.setValueAtTime(82.4,now);
-    osc2.detune.setValueAtTime(5,now);
-    const g2=audioCtx.createGain();g2.gain.setValueAtTime(0,now);g2.gain.linearRampToValueAtTime(.04,now+3);
-    osc2.connect(g2);g2.connect(audioCtx.destination);osc2.start();
-
-    const osc3=audioCtx.createOscillator();osc3.type='sine';osc3.frequency.setValueAtTime(440,now);
-    osc3.detune.setValueAtTime(-12,now);
-    const g3=audioCtx.createGain();g3.gain.setValueAtTime(0,now);g3.gain.linearRampToValueAtTime(.02,now+4);
-    const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(600,now);
-    osc3.connect(lp);lp.connect(g3);g3.connect(audioCtx.destination);osc3.start();
-
-    const lfo=audioCtx.createOscillator();lfo.type='sine';lfo.frequency.setValueAtTime(.15,now);
-    const lg=audioCtx.createGain();lg.gain.setValueAtTime(3,now);
-    lfo.connect(lg);lg.connect(osc2.detune);lfo.start();
-
-    ambientOn=true;
-  }catch(e){}
-}
+});
 
 function animate(){
   requestAnimationFrame(animate);
