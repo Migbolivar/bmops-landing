@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title data-i18n="meta.title">BMOPS — Consultoría AI para PYMES</title>
+<meta name="description" data-i18n="meta.desc" content="Transformamos PYMES con Inteligencia Artificial."/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="apple-touch-icon" href="/favicon.svg"/>
+<meta name="theme-color" content="#050508"/>
+<meta property="og:title" data-i18n="meta.title" content="BMOPS — Consultoría AI para PYMES"/>
+<meta property="og:description" data-i18n="meta.desc" content="Transformamos PYMES con Inteligencia Artificial."/>
+<meta property="og:image" content="/logo.svg"/>
+<meta property="og:type" content="website"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap');
+  *{font-family:'Geist',sans-serif}
+  .mono{font-family:'Geist Mono',monospace}
+  body{background:#050508;color:#e4e4e7;overflow-x:hidden}
+  canvas#bg{position:fixed;top:0;left:0;z-index:0;pointer-events:none}
+  .grid-layer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;background-image:linear-gradient(rgb(255 255 255/.02) 1px,transparent 1px),linear-gradient(90deg,rgb(255 255 255/.02) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 60% 60% at 50% 40%,#000 30%,transparent 70%)}
+  .scanline{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgb(0 0 0/.03) 2px,rgb(0 0 0/.03) 4px)}
+  .glass{background:rgb(255 255 255/.04);backdrop-filter:blur(24px);border:1px solid rgb(255 255 255/.06)}
+  .glass-card{background:rgb(255 255 255/.03);border:1px solid rgb(255 255 255/.06);border-radius:16px;transition:all .3s}
+  .glass-card:hover{background:rgb(255 255 255/.06);border-color:rgb(255 255 255/.12);transform:translateY(-2px)}
+  .accent-glow{box-shadow:0 0 60px rgb(16 185 129/.15)}
+  .text-gradient{background:linear-gradient(135deg,#34d399,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .section-pad{padding:80px 24px}
+  @media(max-width:768px){.section-pad{padding:56px 16px}}
+  .nav-pill{background:rgb(16 185 129/.1);color:#34d399;padding:8px 16px;border-radius:9999px;transition:all .25s;text-decoration:none}
+  .nav-pill:hover{background:#10b981;color:#000;font-weight:600}
+  /* Language */
+  .lang-select{position:relative;z-index:60}
+  .lang-trigger{display:flex;align-items:center;gap:6px;background:rgb(255 255 255/.05);border:1px solid rgb(255 255 255/.08);color:#a1a1aa;padding:6px 12px;border-radius:9999px;font-size:12px;cursor:pointer;transition:all .2s}
+  .lang-trigger:hover{background:rgb(255 255 255/.1);color:#fff}
+  .lang-trigger svg{width:12px;height:12px;transition:transform .2s}
+  .lang-select.open .lang-trigger svg{transform:rotate(180deg)}
+  .lang-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:#0f0f14;border:1px solid rgb(255 255 255/.08);border-radius:12px;padding:6px;min-width:140px;max-height:320px;overflow-y:auto;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .2s;backdrop-filter:blur(20px)}
+  .lang-select.open .lang-dropdown{opacity:1;visibility:visible;transform:translateY(0)}
+  .lang-option{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:8px;font-size:12px;color:#a1a1aa;cursor:pointer;transition:all .15s;background:none;border:none;text-align:left}
+  .lang-option:hover{background:rgb(255 255 255/.06);color:#fff}
+  .lang-option.active{background:rgb(16 185 129/.15);color:#34d399}
+  /* Drag */
+  .drag-scene{position:relative;min-height:440px;border-radius:20px;overflow:hidden;background:rgb(255 255 255/.02);border:1px solid rgb(255 255 255/.05)}
+  .drag-node{position:absolute;background:rgb(255 255 255/.04);border:1px solid rgb(255 255 255/.08);border-radius:12px;padding:10px 14px;font-size:12px;color:#a1a1aa;backdrop-filter:blur(8px);transition:all .35s cubic-bezier(.4,0,.2,1);cursor:pointer;user-select:none;animation:float 6s ease-in-out infinite}
+  .drag-node:hover{background:rgb(255 255 255/.1);border-color:rgb(255 255 255/.2);z-index:10}
+  .drag-node.warn{border-color:rgb(239 68 68/.25);color:#fca5a5}
+  .drag-node.popped{transform:scale(1.35)!important;z-index:20;background:rgb(16 185 129/.15);border-color:#10b981;color:#34d399;box-shadow:0 0 30px rgb(16 185 129/.25);animation:none}
+  .drag-node.popped .badge{background:#10b981;color:#000;font-size:16px;padding:4px 14px;font-weight:800;animation:popBadge .4s ease-out}
+  @keyframes popBadge{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.3)}100%{transform:scale(1);opacity:1}}
+  @keyframes float{0%,100%{transform:translate(0,0)}25%{transform:translate(6px,-8px)}50%{transform:translate(-4px,4px)}75%{transform:translate(-8px,-2px)}}
+  .drag-node:nth-child(2){animation-delay:-1s;animation-duration:7s}
+  .drag-node:nth-child(3){animation-delay:-2s;animation-duration:5.5s}
+  .drag-node:nth-child(4){animation-delay:-3s;animation-duration:8s}
+  .drag-node:nth-child(5){animation-delay:-0.5s;animation-duration:6.5s}
+  .drag-node:nth-child(6){animation-delay:-1.5s;animation-duration:7.5s}
+  .drag-node:nth-child(7){animation-delay:-2.5s;animation-duration:5s}
+  .drag-node:nth-child(8){animation-delay:-3.5s;animation-duration:6s}
+  .drag-node:nth-child(9){animation-delay:-4s;animation-duration:5.8s}
+  .drag-node:nth-child(10){animation-delay:-0.8s;animation-duration:7.2s}
+  .drag-node .badge{display:inline-block;background:rgb(239 68 68/.15);color:#f87171;padding:2px 8px;border-radius:9999px;font-size:10px;margin-left:8px;font-weight:600;transition:all .35s ease}
+  .drag-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5;pointer-events:none}
+  .drag-center .count{font-size:72px;font-weight:900;color:#ef4444;line-height:1;animation:pulse 2s ease-in-out infinite}
+  .drag-center .bits{font-size:11px;color:#f87171;text-transform:uppercase;letter-spacing:.15em;margin-top:2px}
+  .drag-center .label{font-size:12px;color:#f87171;text-transform:uppercase;letter-spacing:.1em;margin-top:4px}
+  @keyframes pulse{0%,100%{opacity:.85;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+  /* Connected systems orbit */
+  .sys-orbit{position:relative;width:100%;max-width:700px;min-height:500px;margin:0 auto}
+  .sys-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;padding:36px 28px;background:linear-gradient(135deg,rgb(16 185 129/.1),rgb(139 92 246/.1));border:2px solid rgb(16 185 129/.25);border-radius:50%;z-index:10;width:150px;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .4s}
+  .sys-core:hover{box-shadow:0 0 60px rgb(16 185 129/.2);border-color:#34d399}
+  .sys-core-icon{font-size:46px;margin-bottom:4px;animation:bounce 2s ease-in-out infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .sys-core h4{font-size:12px;font-weight:700;color:#34d399;margin:0;line-height:1.2}
+  .sys-core p{font-size:9px;color:#71717a;margin:2px 0 0}
+  .sys-orbiter{position:absolute;display:flex;align-items:center;gap:8px;background:rgb(255 255 255/.04);border:1px solid rgb(255 255 255/.08);border-radius:12px;padding:8px 14px;font-size:11px;color:#a1a1aa;cursor:pointer;transition:all .35s;white-space:nowrap;z-index:5}
+  .sys-orbiter:hover{background:rgb(255 255 255/.08);z-index:15;border-color:transparent;
+    box-shadow:0 0 18px rgb(16 185 129/.3),0 0 40px rgb(16 185 129/.1),inset 0 0 18px rgb(16 185 129/.08);
+    animation:electricity .8s ease-in-out infinite}
+  @keyframes electricity{0%,100%{box-shadow:0 0 18px rgb(16 185 129/.3),0 0 40px rgb(16 185 129/.1),inset 0 0 18px rgb(16 185 129/.08)}25%{box-shadow:0 0 24px rgb(52 211 153/.5),0 0 50px rgb(16 185 129/.2),inset 0 0 24px rgb(16 185 129/.15)}50%{box-shadow:0 0 14px rgb(16 185 129/.25),0 0 35px rgb(16 185 129/.08),inset 0 0 14px rgb(16 185 129/.05)}75%{box-shadow:0 0 28px rgb(52 211 153/.55),0 0 55px rgb(16 185 129/.25),inset 0 0 26px rgb(16 185 129/.18)}}
+  .sys-orbiter .orb-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .3s}
+  .sys-orbiter:hover .orb-icon{transform:scale(1.25)}
+  .sys-orbiter .orb-tag{font-size:9px;color:#52525b;text-transform:uppercase;letter-spacing:.05em}
+  .sys-orbiter.crm .orb-icon{background:rgb(59 130 246/.15);color:#60a5fa}
+  .sys-orbiter.sop .orb-icon{background:rgb(16 185 129/.15);color:#34d399}
+  .sys-orbiter.ins .orb-icon{background:rgb(139 92 246/.15);color:#a78bfa}
+  /* Flow lines - hidden by default, glow on orbit hover */
+  .sys-lines{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2}
+  .sys-lines polyline{opacity:0;transition:opacity .4s}
+  .sys-orbit:hover .sys-lines polyline{opacity:0.4}
+  .sys-orbit:hover .sys-lines .ray-green{opacity:0.45}
+  .sys-orbit:hover .sys-lines .ray-purple{opacity:0.4}
+  /* Engine */
+  .engine-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:40px}
+  .engine-step{text-align:center;padding:24px 16px;background:rgb(255 255 255/.03);border:1px solid rgb(255 255 255/.05);border-radius:16px;transition:all .3s;position:relative;cursor:pointer}
+  .engine-step:hover{background:rgb(255 255 255/.06);border-color:rgb(16 185 129/.15);transform:translateY(-4px)}
+  .engine-step.active{background:rgb(16 185 129/.08);border-color:#10b981}
+  .engine-step::after{content:'';position:absolute;top:50%;right:-10px;width:20px;height:1px;background:rgb(255 255 255/.08)}
+  .engine-step:last-child::after{display:none}
+  .engine-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px}
+  .engine-icon.s1{background:rgb(59 130 246/.12);color:#60a5fa}
+  .engine-icon.s2{background:rgb(139 92 246/.12);color:#a78bfa}
+  .engine-icon.s3{background:rgb(16 185 129/.12);color:#34d399}
+  .engine-icon.s4{background:rgb(245 158 11/.12);color:#fbbf24}
+  .engine-step h4{font-size:15px;font-weight:600;margin:0 0 4px}
+  /* Sector examples */
+  .sector-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:24px}
+  .sector-pill{padding:8px 12px;border-radius:9999px;font-size:12px;text-align:center;cursor:pointer;background:rgb(255 255 255/.04);border:1px solid rgb(255 255 255/.06);color:#a1a1aa;transition:all .2s}
+  .sector-pill:hover,.sector-pill.active{background:rgb(16 185 129/.15);border-color:#10b981;color:#34d399}
+  .examples-box{background:rgb(255 255 255/.02);border:1px solid rgb(255 255 255/.06);border-radius:16px;padding:24px;min-height:100px}
+  .examples-box h4{font-size:14px;color:#34d399;margin:0 0 16px}
+  .example-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgb(255 255 255/.04);font-size:13px}
+  .example-item:last-child{border-bottom:none}
+  .example-num{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;background:rgb(255 255 255/.05);color:#a1a1aa}
+  /* Services tabs */
+  .svc-tabs{display:flex;gap:4px;margin-bottom:32px;flex-wrap:wrap}
+  .svc-tab{padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;background:rgb(255 255 255/.03);border:1px solid rgb(255 255 255/.05);color:#a1a1aa;transition:all .25s;display:flex;align-items:center;gap:8px}
+  .svc-tab:hover{background:rgb(255 255 255/.06);color:#fff}
+  .svc-tab.active{background:rgb(16 185 129/.12);border-color:#10b981;color:#34d399}
+  .svc-tab .emoji{font-size:24px}
+  .svc-panel{display:none;animation:fadeIn .3s ease}
+  .svc-panel.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  /* Form */
+  .form-panel{background:rgb(255 255 255/.03);border:1px solid rgb(255 255 255/.06);border-radius:20px;padding:40px;max-width:640px;margin:0 auto}
+  .form-stepper{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+  .form-step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:rgb(255 255 255/.05);color:#52525b;transition:all .3s}
+  .form-step-num.active{background:#10b981;color:#000}
+  .form-step-line{flex:1;height:1px;background:rgb(255 255 255/.06)}
+  .step-panel{display:none}
+  .step-panel.active{display:block}
+  .chip-grid{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:rgb(255 255 255/.05);border:1px solid rgb(255 255 255/.08);color:#a1a1aa;padding:8px 16px;border-radius:9999px;font-size:13px;cursor:pointer;transition:all .2s}
+  .chip:hover,.chip.selected{background:rgb(16 185 129/.15);border-color:#10b981;color:#34d399}
+  /* Footer */
+  .ftr-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px;padding:64px 24px;max-width:1200px;margin:0 auto}
+  .ftr-brand h3{font-size:18px;font-weight:700;margin:0 0 8px}
+  .ftr-brand p{font-size:13px;color:#71717a;max-width:300px;line-height:1.6}
+  .ftr-col h4{font-size:12px;color:#52525b;text-transform:uppercase;letter-spacing:.1em;margin:0 0 16px}
+  .ftr-col a{display:flex;align-items:center;gap:4px;font-size:13px;color:#a1a1aa;text-decoration:none;padding:4px 0;transition:color .2s}
+  .ftr-col a:hover{color:#fff}
+  .ftr-bottom{border-top:1px solid rgb(255 255 255/.05);padding:24px;text-align:center;font-size:11px;color:#52525b;display:flex;justify-content:space-between;max-width:1200px;margin:0 auto}
+  select option{color:#111;background:#f4f4f5}
+  @media(max-width:768px){
+    .engine-grid{grid-template-columns:repeat(2,1fr)} .engine-step::after{display:none}
+    .sector-grid{grid-template-columns:repeat(3,1fr)}
+    .ftr-grid{grid-template-columns:1fr;gap:32px}
+    .form-panel{padding:24px}
+  }
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+  <script type="module" crossorigin src="/assets/index-ByzuLs6L.js"></script>
+</head>
+<body>
+<div class="grid-layer" aria-hidden="true"></div>
+<div class="scanline" aria-hidden="true"></div>
+<canvas id="bg"></canvas>
+
+<!-- Nav -->
+<nav class="fixed top-0 w-full z-50 glass">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-3 shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" width="160" height="40" fill="none" viewBox="0 0 160 40" class="h-8 w-auto">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#a78bfa"/></linearGradient><linearGradient id="lg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/></linearGradient><filter id="lglow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+        <g transform="translate(4,4)"><line x1="4" y1="16" x2="16" y2="6" stroke="url(#lg)" stroke-width="1.5" opacity="0.6"/><line x1="16" y1="6" x2="28" y2="16" stroke="url(#lg)" stroke-width="1.5" opacity="0.6"/><line x1="28" y1="16" x2="16" y2="26" stroke="url(#lg)" stroke-width="1.5" opacity="0.6"/><line x1="16" y1="26" x2="4" y2="16" stroke="url(#lg)" stroke-width="1.5" opacity="0.6"/><circle cx="16" cy="16" r="14" fill="none" stroke="url(#lg)" stroke-width="0.5" opacity="0.2"/><circle cx="16" cy="16" r="11" fill="none" stroke="url(#lg)" stroke-width="0.3" opacity="0.15"/><circle cx="16" cy="6" r="3" fill="#34d399" filter="url(#lglow)" opacity="0.95"/><circle cx="4" cy="16" r="3" fill="#a78bfa" filter="url(#lglow)" opacity="0.95"/><circle cx="28" cy="16" r="3" fill="#34d399" filter="url(#lglow)" opacity="0.95"/><circle cx="16" cy="26" r="3" fill="#a78bfa" filter="url(#lglow)" opacity="0.95"/><circle cx="16" cy="16" r="4.5" fill="url(#lg2)" opacity="0.9"/><circle cx="16" cy="16" r="2" fill="#050508"/><circle cx="16" cy="16" r="1.2" fill="#34d399" opacity="0.8"/></g>
+        <text x="46" y="28" font-family="'Geist',system-ui,sans-serif" font-weight="700" font-size="22" letter-spacing="-0.5"><tspan fill="url(#lg)">BM</tspan><tspan fill="#a1a1aa">OPS</tspan></text>
+      </svg>
+      <div class="hidden md:block mono text-zinc-400 text-[9px] tracking-[0.12em] leading-tight" style="max-width:140px">Business Management<br/>Operation Package System</div>
+    </a>
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex gap-3 text-sm">
+        <a href="#servicios" class="nav-pill" data-i18n="nav.servicios">Servicios</a>
+        <a href="#proceso" class="nav-pill" data-i18n="nav.proceso">Proceso</a>
+        <a href="#contacto" class="nav-pill" data-i18n="nav.contacto">Contacto</a>
+      </div>
+      <div class="lang-select" id="langSelect"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="relative min-h-[85dvh] flex items-center section-pad pt-24">
+  <div class="max-w-7xl mx-auto w-full relative z-10">
+    <div class="max-w-3xl">
+      <div class="mono text-emerald-400 text-xs tracking-[0.2em] mb-6" data-i18n="hero.kicker">CONSULTORÍA AI PARA PYMES</div>
+      <h1 class="text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
+        <span data-i18n="hero.line1">Tu empresa</span><br/>
+        <span class="text-gradient" data-i18n="hero.line2">potenciada con IA</span>
+      </h1>
+      <p class="text-lg md:text-xl text-zinc-400 leading-relaxed max-w-xl mb-10" data-i18n="hero.sub">
+        Transformamos pequeñas y medianas empresas con inteligencia artificial. Sin humo, sin costes desorbitados. Resultados desde la primera semana.
+      </p>
+      <div class="flex gap-4">
+        <a href="#contacto" class="bg-emerald-500 text-black font-semibold px-8 py-3 rounded-full hover:bg-emerald-400 transition-all text-sm" data-i18n="hero.cta1">Solicita tu Consultoría AI</a>
+        <a href="#servicios" class="glass px-8 py-3 rounded-full hover:bg-white/8 transition-all text-sm text-zinc-300" data-i18n="hero.cta2">Ver servicios</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Operational Drag -->
+<section class="section-pad border-t border-white/5">
+  <div class="max-w-7xl mx-auto">
+    <div class="mono text-emerald-400 text-xs tracking-[0.2em] mb-4" data-i18n="drag.kicker">EL COSTE OCULTO DE CRECER</div>
+    <h2 class="text-3xl md:text-5xl font-bold mb-6" data-i18n="drag.title">El trabajo manual está frenando tu crecimiento.</h2>
+    <p class="text-zinc-400 max-w-2xl mb-12" data-i18n="drag.sub">Herramientas desconectadas, tareas repetitivas, más clientes = más caos. Así se ve tu operación sin IA:</p>
+    <div class="drag-scene">
+      <div class="drag-node" style="top:8%;left:5%">📧 Email <span class="badge">47</span></div>
+      <div class="drag-node warn" style="top:15%;right:8%">📋 Tareas <span class="badge">33</span></div>
+      <div class="drag-node" style="top:35%;left:3%">👥 CRM <span class="badge">29</span></div>
+      <div class="drag-node warn" style="top:28%;right:12%">📊 Sheets <span class="badge">22</span></div>
+      <div class="drag-node" style="top:55%;left:10%">💬 Slack <span class="badge">31</span></div>
+      <div class="drag-node warn" style="top:50%;right:6%">🧾 Facturas <span class="badge">26</span></div>
+      <div class="drag-node" style="top:72%;left:20%">📞 Follow-up <span class="badge">24</span></div>
+      <div class="drag-node warn" style="top:75%;right:18%">❓ Sin asignar <span class="badge">18</span></div>
+      <div class="drag-node" style="top:10%;left:35%">📝 Cotizaciones <span class="badge">15</span></div>
+      <div class="drag-node warn" style="top:65%;left:45%">⚠️ Errores datos <span class="badge">11</span></div>
+      <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none" aria-hidden="true">
+        <line x1="8%" y1="12%" x2="45%" y2="48%" stroke="rgb(239 68 68/.08)" stroke-width="1"/>
+        <line x1="88%" y1="18%" x2="50%" y2="50%" stroke="rgb(239 68 68/.06)" stroke-width="1"/>
+        <line x1="5%" y1="38%" x2="48%" y2="50%" stroke="rgb(239 68 68/.07)" stroke-width="1"/>
+        <line x1="92%" y1="32%" x2="52%" y2="49%" stroke="rgb(239 68 68/.05)" stroke-width="1"/>
+        <line x1="12%" y1="58%" x2="48%" y2="50%" stroke="rgb(239 68 68/.06)" stroke-width="1"/>
+        <line x1="90%" y1="54%" x2="51%" y2="50%" stroke="rgb(239 68 68/.07)" stroke-width="1"/>
+        <line x1="22%" y1="75%" x2="48%" y2="52%" stroke="rgb(239 68 68/.05)" stroke-width="1"/>
+        <line x1="80%" y1="78%" x2="50%" y2="51%" stroke="rgb(239 68 68/.04)" stroke-width="1"/>
+        <line x1="38%" y1="14%" x2="49%" y2="49%" stroke="rgb(239 68 68/.05)" stroke-width="1"/>
+        <line x1="50%" y1="68%" x2="49%" y2="51%" stroke="rgb(239 68 68/.06)" stroke-width="1"/>
+      </svg>
+      <div class="drag-center">
+        <div class="count">256</div>
+        <div class="bits">bits de caos</div>
+        <div class="label" data-i18n="drag.center">tareas pendientes</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Servicios con tabs -->
+<section id="servicios" class="section-pad border-t border-white/5">
+  <div class="max-w-7xl mx-auto">
+    <div class="mono text-emerald-400 text-xs tracking-[0.2em] mb-4" data-i18n="services.kicker">SERVICIOS</div>
+    <h2 class="text-3xl md:text-5xl font-bold mb-12" data-i18n="services.title">Lo que hacemos</h2>
+    <div class="svc-tabs">
+      <div class="svc-tab active" data-svc="diag"><span class="emoji">🔍</span><span data-i18n="services.s1.title">Diagnóstico Inteligente</span></div>
+      <div class="svc-tab" data-svc="infra"><span class="emoji">⚡</span><span data-i18n="services.s2.title">Infraestructura AI</span></div>
+      <div class="svc-tab" data-svc="sop"><span class="emoji">🚀</span><span data-i18n="services.s3.title">Suscripción & Soporte</span></div>
+    </div>
+    <div class="svc-panel active" id="panel-diag">
+      <div class="glass-card p-8">
+        <h3 class="text-xl font-semibold mb-3" data-i18n="services.s1.title">Diagnóstico Inteligente</h3>
+        <p class="text-zinc-400 text-sm leading-relaxed mb-4" data-i18n="services.s1.desc">Analizamos tus datos, procesos y sistemas. Detectamos fugas de eficiencia, oportunidades de automatización y puntos ciegos.</p>
+        <div class="mono text-emerald-400 text-xs tracking-[0.15em] mb-2">¿QUÉ INCLUYE?</div>
+        <ul class="text-zinc-400 text-sm space-y-2">
+          <li>• Mapeo completo de procesos actuales</li><li>• Identificación de cuellos de botella</li><li>• Análisis de datos y calidad</li><li>• Roadmap de automatización priorizado</li><li>• Estimación de ROI por cada oportunidad</li>
+        </ul>
+        <a href="#contacto" class="inline-block bg-emerald-500 text-black font-semibold px-6 py-2 rounded-full hover:bg-emerald-400 transition-all text-sm mt-4">Solicitar diagnóstico →</a>
+      </div>
+    </div>
+    <div class="svc-panel" id="panel-infra">
+      <div class="glass-card p-8">
+        <h3 class="text-xl font-semibold mb-3" data-i18n="services.s2.title">Infraestructura AI</h3>
+        <p class="text-zinc-400 text-sm leading-relaxed mb-4" data-i18n="services.s2.desc">Montamos tu stack completo: chatbots 24/7, RAG con tus documentos, automatizaciones y dashboards en tiempo real.</p>
+        <div class="mono text-emerald-400 text-xs tracking-[0.15em] mb-2">¿QUÉ INCLUYE?</div>
+        <ul class="text-zinc-400 text-sm space-y-2">
+          <li>• Chatbots inteligentes 24/7 multicanal</li><li>• RAG con tus documentos y knowledge base</li><li>• Automatizaciones n8n personalizadas</li><li>• Dashboards en tiempo real (Power BI / Metabase)</li><li>• Infraestructura auto-hosted sin vendor lock-in</li>
+        </ul>
+        <a href="#contacto" class="inline-block bg-emerald-500 text-black font-semibold px-6 py-2 rounded-full hover:bg-emerald-400 transition-all text-sm mt-4">Quiero mi infraestructura AI →</a>
+      </div>
+    </div>
+    <div class="svc-panel" id="panel-sop">
+      <div class="glass-card p-8">
+        <h3 class="text-xl font-semibold mb-3" data-i18n="services.s3.title">Suscripción & Soporte</h3>
+        <p class="text-zinc-400 text-sm leading-relaxed mb-4" data-i18n="services.s3.desc">Mantenimiento continuo, mejoras progresivas, capacitación de tu equipo y soporte prioritario.</p>
+        <div class="mono text-emerald-400 text-xs tracking-[0.15em] mb-2">¿QUÉ INCLUYE?</div>
+        <ul class="text-zinc-400 text-sm space-y-2">
+          <li>• Monitoreo 24/7 de tus sistemas AI</li><li>• Mejoras mensuales basadas en uso real</li><li>• Capacitación continua para tu equipo</li><li>• Soporte prioritario (< 4h respuesta)</li><li>• Nuevos módulos según tu negocio crece</li>
+        </ul>
+        <a href="#contacto" class="inline-block bg-emerald-500 text-black font-semibold px-6 py-2 rounded-full hover:bg-emerald-400 transition-all text-sm mt-4">Quiero soporte continuo →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Connected Systems -->
+<section class="section-pad border-t border-white/5" id="ecosistema">
+  <div class="max-w-7xl mx-auto">
+    <div class="mono text-emerald-400 text-xs tracking-[0.2em] mb-4" data-i18n="sys.kicker">INFRAESTRUCTURA</div>
+    <h2 class="text-3xl md:text-5xl font-bold mb-16" data-i18n="sys.title">Conectamos todo tu ecosistema</h2>
+
+    <div class="sys-orbit">
+      <!-- TOP: CRM above brain -->
+      <div class="sys-orbiter crm" style="top:1%;left:50%;transform:translateX(-50%)"><div class="orb-icon">👥</div><div><strong>CRM</strong><div class="orb-tag">Clientes</div></div></div>
+
+      <!-- LEFT: Chatbot, Facturación, Workflows, Sync -->
+      <div class="sys-orbiter sop" style="top:13%;left:3%"><div class="orb-icon">🤖</div><div><strong>Chatbot</strong><div class="orb-tag">24/7 Atención</div></div></div>
+      <div class="sys-orbiter crm" style="top:31%;left:1%"><div class="orb-icon">🧾</div><div><strong>Facturación</strong><div class="orb-tag">ERP & Pagos</div></div></div>
+      <div class="sys-orbiter sop" style="top:50%;left:3%"><div class="orb-icon">⚡</div><div><strong>Workflows</strong><div class="orb-tag">Automatización</div></div></div>
+      <div class="sys-orbiter ins" style="top:68%;left:5%"><div class="orb-icon">🔄</div><div><strong>Sync</strong><div class="orb-tag">Sincronización</div></div></div>
+
+      <!-- RIGHT: Email, Analytics, Soporte, Insights -->
+      <div class="sys-orbiter sop" style="top:12%;right:3%"><div class="orb-icon">📧</div><div><strong>Email</strong><div class="orb-tag">Entrada/Salida</div></div></div>
+      <div class="sys-orbiter ins" style="top:29%;right:1%"><div class="orb-icon">📊</div><div><strong>Analytics</strong><div class="orb-tag">Reportes</div></div></div>
+      <div class="sys-orbiter sop" style="top:47%;right:2%"><div class="orb-icon">💬</div><div><strong>Soporte</strong><div class="orb-tag">Tickets & Chat</div></div></div>
+      <div class="sys-orbiter ins" style="top:63%;right:4%"><div class="orb-icon">📈</div><div><strong>Insights</strong><div class="orb-tag">KPIs</div></div></div>
+
+      <!-- BOTTOM: Cotizaciones below brain -->
+      <div class="sys-orbiter crm" style="bottom:1%;left:50%;transform:translateX(-50%)"><div class="orb-icon">📝</div><div><strong>Cotizaciones</strong><div class="orb-tag">Pipeline</div></div></div>
+
+      <!-- Lightning rays SVG (hidden until hover, endpoints stop at brain edge r=85 from 350,250) -->
+      <svg class="sys-lines" viewBox="0 0 700 500" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <filter id="rayGlow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <!-- TOP CRM → brain top edge -->
+        <polyline class="ray-green" points="350,30 340,60 360,75 350,100 355,130 350,165" fill="none" stroke="#34d399" stroke-width="1.5" filter="url(#rayGlow)"/>
+        <!-- Left → brain left edge (~265 from center 350) -->
+        <polyline class="ray-green" points="50,90 140,100 170,118 220,130 250,142 265,158" fill="none" stroke="#34d399" stroke-width="1.3" filter="url(#rayGlow)"/>
+        <polyline class="ray-purple" points="30,180 120,185 155,195 210,205 240,212 265,218" fill="none" stroke="#a78bfa" stroke-width="1.3" filter="url(#rayGlow)"/>
+        <polyline class="ray-green" points="55,275 140,268 170,260 225,253 250,250 265,248" fill="none" stroke="#34d399" stroke-width="1.3" filter="url(#rayGlow)"/>
+        <polyline class="ray-purple" points="65,365 150,350 180,338 230,320 255,310 267,298" fill="none" stroke="#a78bfa" stroke-width="1.3" filter="url(#rayGlow)"/>
+        <!-- Right → brain right edge (~435 from center 350) -->
+        <polyline class="ray-green" points="640,85 555,100 525,118 480,130 450,142 435,158" fill="none" stroke="#34d399" stroke-width="1.3" filter="url(#rayGlow)"/>
+        <polyline class="ray-purple" points="665,170 575,178 545,190 490,202 460,210 435,218" fill="none" stroke="#a78bfa" stroke-width="1.3" filter="url(#rayGlow)"/>
+        <polyline class="ray-green" points="660,260 570,258 540,255 485,252 455,250 435,248" fill="none" stroke="#34d399" stroke-width="1.3" filter="url(#rayGlow)"/>
+        <polyline class="ray-purple" points="640,340 555,335 520,325 470,312 445,302 432,290" fill="none" stroke="#a78bfa" stroke-width="1.3" filter="url(#rayGlow)"/>
+        <!-- BOTTOM Cotizaciones → brain bottom edge -->
+        <polyline class="ray-green" points="350,430 345,400 355,378 350,362 352,348 350,338" fill="none" stroke="#34d399" stroke-width="1.5" filter="url(#rayGlow)"/>
+        <!-- Orbit rings -->
+        <ellipse cx="350" cy="250" rx="315" ry="225" fill="none" stroke="rgb(16 185 129/.1)" stroke-width="1" stroke-dasharray="6 14"/>
+        <ellipse cx="350" cy="250" rx="225" ry="158" fill="none" stroke="rgb(139 92 246/.08)" stroke-width="1" stroke-dasharray="3 9"/>
+      </svg>
+
+      <!-- Center Brain -->
+      <div class="sys-core">
+        <div class="sys-core-icon">🧠</div>
+        <h4 data-i18n="sys.core">AI AUTOMATION</h4>
+        <p data-i18n="sys.coreSub">Orquestar. Decidir. Ejecutar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI Engine + Sector Examples -->
+<section id="proceso" class="section-pad border-t border-white/5">
+  <div class="max-w-7xl mx-auto">
+    <div class="mono text-emerald-400 text-xs tracking-[0.2em] mb-4" data-i18n="engine.kicker">MOTOR DE INTELIGENCIA</div>
+    <h2 class="text-3xl md:text-5xl font-bold mb-6" data-i18n="engine.title">Del diagnóstico al resultado</h2>
+    <p class="text-zinc-400 mb-12" data-i18n="engine.sub">Selecciona tu sector para ver ejemplos concretos de automatización:</p>
+
+    <!-- Sector pills -->
+    <div class="sector-grid" id="sectorGrid">
+      <div class="sector-pill active" data-sector="salud">🏥 Salud</div>
+      <div class="sector-pill" data-sector="finanzas">💰 Finanzas</div>
+      <div class="sector-pill" data-sector="ops">⚙️ Operaciones</div>
+      <div class="sector-pill" data-sector="ecom">🛒 E-commerce</div>
+      <div class="sector-pill" data-sector="construccion">🏗️ Construcción</div>
+      <div class="sector-pill" data-sector="inmo">🏢 Inmobiliaria</div>
+    </div>
+
+    <!-- Engine steps -->
+    <div class="engine-grid">
+      <div class="engine-step active" data-engine="0">
+        <div class="engine-icon s1"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="5"/><path d="m15 15 5 5"/></svg></div>
+        <h4 data-i18n="engine.s1.title">Analizar</h4>
+      </div>
+      <div class="engine-step" data-engine="1">
+        <div class="engine-icon s2"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 6h8M5 12h14M5 18h6"/></svg></div>
+        <h4 data-i18n="engine.s2.title">Priorizar</h4>
+      </div>
+      <div class="engine-step" data-engine="2">
+        <div class="engine-icon s3"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 14.5 9.5 21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></svg></div>
+        <h4 data-i18n="engine.s3.title">Automatizar</h4>
+      </div>
+      <div class="engine-step" data-engine="3">
+        <div class="engine-icon s4"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 16c2 0 3-2 5-4.5C11.5 9 12.5 8 14.5 8c2 0 3 1 4.5 3"/><path d="M5 19h14"/></svg></div>
+        <h4 data-i18n="engine.s4.title">Mejorar</h4>
+      </div>
+    </div>
+
+    <!-- Examples box -->
+    <div class="examples-box" id="examplesBox"></div>
+    <div class="text-center mt-8">
+      <a href="#contacto" class="inline-block bg-emerald-500 text-black font-semibold px-8 py-3 rounded-full hover:bg-emerald-400 transition-all text-sm">¿Quieres esto para tu empresa? → Solicita tu diagnóstico</a>
+    </div>
+  </div>
+</section>
+
+<!-- Form -->
+<section id="contacto" class="section-pad relative border-t border-white/5">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="mono text-emerald-400 text-xs tracking-[0.2em] mb-4" data-i18n="form.kicker">DIAGNÓSTICO OPERATIVO</div>
+      <h2 class="text-3xl md:text-5xl font-bold mb-4" data-i18n="form.title">Cuéntanos qué proceso te está frenando.</h2>
+      <p class="text-zinc-400 max-w-lg mx-auto" data-i18n="form.sub">Te diremos si la IA puede resolverlo.</p>
+    </div>
+    <div class="form-panel accent-glow">
+      <div class="form-stepper">
+        <div class="form-step-num active" id="stepNum1">1</div><div class="form-step-line"></div><div class="form-step-num" id="stepNum2">2</div>
+      </div>
+      <div class="step-panel active" id="step1">
+        <form id="leadForm" name="contacto" method="POST" data-netlify="true" class="space-y-4">
+          <input type="hidden" name="form-name" value="contacto"><input type="hidden" name="diagnostic" id="diagnosticField">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label class="block text-xs text-zinc-400 mb-1 mono" data-i18n="form.name">NOMBRE</label><input type="text" name="nombre" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none transition-colors" data-i18n-placeholder="form.name.ph" placeholder="Tu nombre"></div>
+            <div><label class="block text-xs text-zinc-400 mb-1 mono" data-i18n="form.email">EMAIL</label><input type="email" name="email" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none transition-colors" data-i18n-placeholder="form.email.ph" placeholder="tu@email.com"></div>
+            <div><label class="block text-xs text-zinc-400 mb-1 mono" data-i18n="form.company">EMPRESA</label><input type="text" name="empresa" required class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none transition-colors" data-i18n-placeholder="form.company.ph" placeholder="Nombre de tu empresa"></div>
+            <div><label class="block text-xs text-zinc-400 mb-1 mono" data-i18n="form.sector">SECTOR</label><select name="sector" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none transition-colors"><option value="" data-i18n="form.sector.ph">Selecciona sector</option><option>Finanzas/Banca</option><option>Salud/Clínicas</option><option>Energía/Oil & Gas</option><option>Gobierno/Sector Público</option><option>E-commerce/Retail</option><option>Construcción</option><option>Inmobiliario</option><option>Logística/Transporte</option><option>Educación</option><option>Manufactura</option><option>Marketing/Agencia</option><option>Telecomunicaciones</option><option>Seguros</option><option>Hostelería/Turismo</option><option>Legal</option><option>Agricultura/Agrotech</option><option>RRHH/Consultoría</option><option>Medios/Entretenimiento</option><option>ONG/Tercer Sector</option><option>Otro</option></select></div>
+          </div>
+          <button type="button" class="w-full bg-emerald-500 text-black font-semibold px-8 py-3 rounded-full hover:bg-emerald-400 transition-all text-sm" onclick="goStep2()" data-i18n="form.continue">Continuar al diagnóstico AI</button>
+        </form>
+      </div>
+      <div class="step-panel" id="step2">
+        <p class="text-sm text-zinc-400 mb-6" data-i18n="form.diag.title">Selecciona dónde tu equipo pierde más tiempo:</p>
+        <div class="chip-grid mb-6" id="chipArea">
+          <button class="chip" data-val="Sales follow-up">Seguimiento de ventas</button><button class="chip" data-val="Customer support">Atención al cliente</button><button class="chip" data-val="Internal reporting">Reportes internos</button><button class="chip" data-val="Data entry">Entrada de datos</button><button class="chip" data-val="Operations">Operaciones</button><button class="chip" data-val="Approvals">Aprobaciones</button><button class="chip" data-val="Lead management">Gestión de leads</button><button class="chip" data-val="Finance">Finanzas</button><button class="chip" data-val="Marketing">Marketing</button><button class="chip" data-val="Not sure">No estoy seguro</button>
+        </div>
+        <p class="text-sm text-zinc-400 mb-4" data-i18n="form.diag.issue">¿Cuál es el problema principal?</p>
+        <div class="chip-grid mb-6" id="chipIssue">
+          <button class="chip" data-val="Too much manual work">Demasiado trabajo manual</button><button class="chip" data-val="Missed follow-ups">Seguimientos perdidos</button><button class="chip" data-val="Slow response times">Respuesta lenta</button><button class="chip" data-val="Messy data">Datos desordenados</button><button class="chip" data-val="Disconnected tools">Herramientas desconectadas</button><button class="chip" data-val="No visibility">Sin visibilidad</button><button class="chip" data-val="Repetitive tasks">Tareas repetitivas</button>
+        </div>
+        <div class="mb-6"><label class="block text-xs text-zinc-400 mb-1 mono" data-i18n="form.diag.extra">¿ALGO MÁS?</label><textarea id="extraContext" name="mensaje" rows="3" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none transition-colors resize-none" data-i18n-placeholder="form.diag.extra.ph" placeholder="Contexto adicional, herramientas que usas..."></textarea></div>
+        <div class="flex gap-3">
+          <button type="button" class="glass px-6 py-3 rounded-full text-sm text-zinc-300 hover:bg-white/8 transition-all" onclick="goStep1()" data-i18n="form.back">← Volver</button>
+          <button type="submit" class="flex-1 bg-emerald-500 text-black font-semibold px-8 py-3 rounded-full hover:bg-emerald-400 transition-all text-sm" onclick="submitForm()" data-i18n="form.submit">Solicitar diagnóstico AI</button>
+        </div>
+      </div>
+    </div>
+    <p class="text-center text-zinc-600 text-xs mt-4" data-i18n="form.note">GDPR · Sin compromiso · formulario seguro</p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-white/5">
+  <div class="ftr-grid">
+    <div class="ftr-brand">
+      <h3><span class="text-gradient">BM</span><span style="color:#a1a1aa">OPS</span></h3>
+      <p data-i18n="footer.desc">Construimos sistemas inteligentes de automatización que ayudan a las empresas a reducir trabajo manual, responder más rápido y escalar operaciones con menos fricción.</p>
+      <div style="margin-top:16px;display:inline-flex;align-items:center;gap:6px;background:rgb(16 185 129/.1);color:#34d399;padding:6px 14px;border-radius:9999px;font-size:12px;font-weight:600">✦ <span data-i18n="footer.badge">AI-Powered. Future-Ready.</span></div>
+    </div>
+    <div class="ftr-col">
+      <h4 data-i18n="footer.explore">Explorar</h4>
+      <a href="#servicios"><span data-i18n="nav.servicios">Servicios</span> ›</a>
+      <a href="#proceso"><span data-i18n="nav.proceso">Proceso</span> ›</a>
+      <a href="#contacto"><span data-i18n="nav.contacto">Contacto</span> ›</a>
+    </div>
+    <div class="ftr-col">
+      <h4 data-i18n="footer.start">Empezar</h4>
+      <a href="#contacto" style="background:rgb(16 185 129/.1);color:#34d399;padding:8px 16px;border-radius:9999px;display:inline-flex;align-items:center;gap:6px;margin-top:4px"><span data-i18n="footer.cta">Diagnóstico gratuito</span> →</a>
+    </div>
+  </div>
+  <div class="ftr-bottom">
+    <span data-i18n="footer.copy">© 2026 BMOPS — Consultoría AI</span>
+    <span>consultoria@bmops.tech</span>
+    <span data-i18n="footer.location">Caracas, Venezuela · GMT-4</span>
+  </div>
+</footer>
+
+<!-- Three.js -->
+
+
+<!-- i18n + ALL LOGIC -->
+<script>
+// --- TRANSLATIONS (12 langs) ---
+const i18n={
+es:{"meta.title":"BMOPS — Consultoría AI para PYMES","meta.desc":"Transformamos PYMES con IA.","nav.servicios":"Servicios","nav.proceso":"Proceso","nav.contacto":"Contacto","hero.kicker":"CONSULTORÍA AI PARA PYMES","hero.line1":"Tu empresa","hero.line2":"potenciada con IA","hero.sub":"Transformamos pequeñas y medianas empresas con inteligencia artificial. Sin humo, sin costes desorbitados. Resultados desde la primera semana.","hero.cta1":"Solicita tu Consultoría AI","hero.cta2":"Ver servicios","drag.kicker":"EL COSTE OCULTO DE CRECER","drag.title":"El trabajo manual está frenando tu crecimiento.","drag.sub":"Herramientas desconectadas, tareas repetitivas, más clientes = más caos. Así se ve tu operación sin IA:","drag.center":"tareas pendientes","drag.resolution":"Esto es lo que eliminamos con automatización inteligente. ↓","services.kicker":"SERVICIOS","services.title":"Lo que hacemos","services.s1.title":"Diagnóstico Inteligente","services.s1.desc":"Analizamos tus datos, procesos y sistemas.","services.s2.title":"Infraestructura AI","services.s2.desc":"Montamos tu stack completo.","services.s3.title":"Suscripción & Soporte","services.s3.desc":"Mantenimiento continuo y mejoras.","sys.kicker":"INFRAESTRUCTURA","sys.title":"Conectamos todo tu ecosistema","sys.core":"AI AUTOMATION","sys.coreSub":"Orquestar. Decidir. Ejecutar.","sys.out1":"Workflows Automatizados","sys.out2":"Smart Route","sys.out3":"Tiempo Real","sys.out4":"Insights","engine.kicker":"MOTOR DE INTELIGENCIA","engine.title":"Del diagnóstico al resultado","engine.sub":"Selecciona tu sector para ver ejemplos concretos de automatización:","engine.s1.title":"Analizar","engine.s2.title":"Priorizar","engine.s3.title":"Automatizar","engine.s4.title":"Mejorar","form.kicker":"DIAGNÓSTICO OPERATIVO","form.title":"Cuéntanos qué proceso te está frenando.","form.sub":"Te diremos si la IA puede resolverlo.","form.name":"NOMBRE","form.name.ph":"Tu nombre","form.email":"EMAIL","form.email.ph":"tu@email.com","form.company":"EMPRESA","form.company.ph":"Nombre de tu empresa","form.sector":"SECTOR","form.sector.ph":"Selecciona sector","form.continue":"Continuar al diagnóstico AI","form.diag.title":"Selecciona dónde tu equipo pierde más tiempo:","form.diag.issue":"¿Cuál es el problema principal?","form.diag.extra":"¿ALGO MÁS?","form.diag.extra.ph":"Contexto adicional, herramientas que usas...","form.back":"← Volver","form.submit":"Solicitar diagnóstico AI","form.note":"GDPR · Sin compromiso · formulario seguro","footer.desc":"Construimos sistemas inteligentes de automatización.","footer.badge":"AI-Powered. Future-Ready.","footer.explore":"Explorar","footer.start":"Empezar","footer.cta":"Diagnóstico gratuito","footer.copy":"© 2026 BMOPS — Consultoría AI","footer.location":"Caracas, Venezuela · GMT-4"},
+en:{"meta.title":"BMOPS — AI Consulting for SMBs","meta.desc":"We transform SMBs with AI.","nav.servicios":"Services","nav.proceso":"Process","nav.contacto":"Contact","hero.kicker":"AI CONSULTING FOR SMBS","hero.line1":"Your business","hero.line2":"powered by AI","hero.sub":"We transform small and medium businesses with artificial intelligence. No smoke, no outrageous costs. Results from week one.","hero.cta1":"Request your AI Consulting","hero.cta2":"See services","drag.kicker":"THE HIDDEN COST OF GROWTH","drag.title":"Manual work is killing your growth.","drag.sub":"Disconnected tools, repetitive tasks, more clients = more chaos. Your operation without AI:","drag.center":"pending tasks","drag.resolution":"This is what we eliminate with intelligent automation. ↓","services.kicker":"SERVICES","services.title":"What we do","services.s1.title":"Intelligent Diagnosis","services.s1.desc":"We analyze your data, processes and systems.","services.s2.title":"AI Infrastructure","services.s2.desc":"We set up your complete stack.","services.s3.title":"Subscription & Support","services.s3.desc":"Continuous maintenance and improvements.","sys.kicker":"INFRASTRUCTURE","sys.title":"We connect your entire ecosystem","sys.core":"AI AUTOMATION","sys.coreSub":"Orchestrate. Decide. Execute.","sys.out1":"Automated Workflows","sys.out2":"Smart Route","sys.out3":"Real-time","sys.out4":"Insights","engine.kicker":"INTELLIGENCE ENGINE","engine.title":"From diagnosis to results","engine.sub":"Select your sector to see concrete automation examples:","engine.s1.title":"Analyze","engine.s2.title":"Prioritize","engine.s3.title":"Automate","engine.s4.title":"Improve","form.kicker":"OPERATIONAL DIAGNOSIS","form.title":"Tell us what process is slowing you down.","form.sub":"We'll tell you if AI can solve it.","form.name":"NAME","form.name.ph":"Your name","form.email":"EMAIL","form.email.ph":"you@email.com","form.company":"COMPANY","form.company.ph":"Company name","form.sector":"INDUSTRY","form.sector.ph":"Select industry","form.continue":"Continue to AI diagnostic","form.diag.title":"Select where your team wastes time:","form.diag.issue":"What's the main issue?","form.diag.extra":"ANYTHING ELSE?","form.diag.extra.ph":"Additional context, tools you use...","form.back":"← Back","form.submit":"Request AI Audit","form.note":"GDPR · No obligation · Secure form","footer.desc":"We build intelligent automation systems.","footer.badge":"AI-Powered. Future-Ready.","footer.explore":"Explore","footer.start":"Start Here","footer.cta":"Free AI Audit","footer.copy":"© 2026 BMOPS — AI Consulting","footer.location":"Caracas, Venezuela · GMT-4"},
+it:{"meta.title":"BMOPS — Consulenza AI per PMI","meta.desc":"Trasformiamo PMI con IA.","nav.servicios":"Servizi","nav.proceso":"Processo","nav.contacto":"Contatto","hero.kicker":"CONSULENZA AI PER PMI","hero.line1":"La tua azienda","hero.line2":"potenziata con IA","hero.sub":"Trasformiamo PMI con intelligenza artificiale. Risultati dalla prima settimana.","hero.cta1":"Richiedi Consulenza AI","hero.cta2":"Vedi servizi","drag.kicker":"IL COSTO NASCOSTO DELLA CRESCITA","drag.title":"Il lavoro manuale frena la crescita.","drag.sub":"La tua operazione senza IA:","drag.center":"attività","drag.resolution":"Eliminato con automazione intelligente. ↓","services.kicker":"SERVIZI","services.title":"Cosa facciamo","services.s1.title":"Diagnosi Intelligente","services.s1.desc":"Analizziamo dati e processi.","services.s2.title":"Infrastruttura AI","services.s2.desc":"Costruiamo il tuo stack.","services.s3.title":"Abbonamento & Supporto","services.s3.desc":"Manutenzione continua.","sys.kicker":"INFRASTRUTTURA","sys.title":"Connettiamo il tuo ecosistema","sys.core":"AI AUTOMATION","sys.coreSub":"Orchestra. Decidi. Esegui.","sys.out1":"Workflow Automatizzati","sys.out2":"Smart Route","sys.out3":"Tempo Reale","sys.out4":"Insights","engine.kicker":"MOTORE DI INTELLIGENZA","engine.title":"Dalla diagnosi al risultato","engine.sub":"Seleziona il settore per esempi concreti:","engine.s1.title":"Analizzare","engine.s2.title":"Prioritizzare","engine.s3.title":"Automatizzare","engine.s4.title":"Migliorare","form.kicker":"DIAGNOSI OPERATIVA","form.title":"Cosa ti sta frenando.","form.sub":"Se l'IA può risolverlo.","form.name":"NOME","form.name.ph":"Nome","form.email":"EMAIL","form.email.ph":"tu@email.com","form.company":"AZIENDA","form.company.ph":"Nome azienda","form.sector":"SETTORE","form.sector.ph":"Seleziona","form.continue":"Continua diagnosi","form.diag.title":"Dove perdi tempo:","form.diag.issue":"Problema principale?","form.diag.extra":"ALTRO?","form.diag.extra.ph":"Contesto...","form.back":"← Indietro","form.submit":"Richiedi Audit AI","form.note":"GDPR · Sicuro","footer.desc":"Sistemi intelligenti.","footer.badge":"AI-Powered.","footer.explore":"Esplora","footer.start":"Inizia","footer.cta":"Audit gratuito","footer.copy":"© 2026 BMOPS","footer.location":"Caracas, Venezuela"},
+fr:{"meta.title":"BMOPS — Conseil IA pour PME","meta.desc":"Nous transformons les PME avec l'IA.","nav.servicios":"Services","nav.proceso":"Processus","nav.contacto":"Contact","hero.kicker":"CONSEIL IA POUR PME","hero.line1":"Votre entreprise","hero.line2":"boostée par l'IA","hero.sub":"PME avec IA. Résultats dès la première semaine.","hero.cta1":"Demander Conseil IA","hero.cta2":"Voir services","drag.kicker":"COÛT CACHÉ","drag.title":"Le manuel freine la croissance.","drag.sub":"Votre opération sans IA:","drag.center":"tâches","drag.resolution":"Éliminé avec automatisation. ↓","services.kicker":"SERVICES","services.title":"Ce que nous faisons","services.s1.title":"Diagnostic Intelligent","services.s1.desc":"Analyse données et processus.","services.s2.title":"Infrastructure IA","services.s2.desc":"Votre stack complet.","services.s3.title":"Abonnement & Support","services.s3.desc":"Maintenance continue.","sys.kicker":"INFRASTRUCTURE","sys.title":"Connectons votre écosystème","sys.core":"AI AUTOMATION","sys.coreSub":"Orchestrer. Décider. Exécuter.","sys.out1":"Workflows","sys.out2":"Smart Route","sys.out3":"Temps Réel","sys.out4":"Insights","engine.kicker":"MOTEUR D'INTELLIGENCE","engine.title":"Diagnostic au résultat","engine.sub":"Sélectionnez secteur pour exemples:","engine.s1.title":"Analyser","engine.s2.title":"Prioriser","engine.s3.title":"Automatiser","engine.s4.title":"Améliorer","form.kicker":"DIAGNOSTIC OPÉRATIONNEL","form.title":"Qu'est-ce qui vous freine.","form.sub":"L'IA peut résoudre.","form.name":"NOM","form.email":"EMAIL","form.company":"ENTREPRISE","form.sector":"SECTEUR","form.continue":"Continuer diagnostic","form.diag.title":"Où perdez-vous du temps:","form.diag.issue":"Problème principal?","form.back":"← Retour","form.submit":"Demander Audit IA","form.note":"GDPR · Sécurisé","footer.desc":"Systèmes intelligents.","footer.badge":"AI-Powered.","footer.explore":"Explorer","footer.start":"Commencer","footer.cta":"Audit gratuit","footer.copy":"© 2026 BMOPS","footer.location":"Caracas, Venezuela"},
+nl:{"meta.title":"BMOPS — AI Consultancy","meta.desc":"Transformeren MKB met AI.","nav.servicios":"Diensten","nav.proceso":"Proces","nav.contacto":"Contact","hero.kicker":"AI CONSULTANCY","hero.line1":"Jouw bedrijf","hero.line2":"versterkt met AI","hero.sub":"MKB met AI. Resultaten vanaf week één.","hero.cta1":"Vraag AI Consultancy aan","hero.cta2":"Bekijk diensten","drag.kicker":"VERBORGEN KOSTEN","drag.title":"Handmatig werk remt groei.","drag.sub":"Jouw operatie zonder AI:","drag.center":"taken","drag.resolution":"Weg met automatisering. ↓","services.kicker":"DIENSTEN","services.title":"Wat we doen","services.s1.title":"Diagnose","services.s1.desc":"Data en proces analyse.","services.s2.title":"AI Infrastructuur","services.s2.desc":"Complete stack.","services.s3.title":"Abonnement","services.s3.desc":"Continue onderhoud.","sys.kicker":"INFRASTRUCTUUR","sys.title":"Ecosysteem verbinden","sys.core":"AI AUTOMATION","sys.out1":"Workflows","sys.out2":"Smart Route","sys.out3":"Realtime","sys.out4":"Insights","engine.kicker":"INTELLIGENCE ENGINE","engine.title":"Diagnose naar resultaat","engine.sub":"Sector voorbeelden:","engine.s1.title":"Analyseren","engine.s2.title":"Prioriteren","engine.s3.title":"Automatiseren","engine.s4.title":"Verbeteren","form.kicker":"DIAGNOSE","form.title":"Wat remt jou.","form.name":"NAAM","form.email":"E-MAIL","form.company":"BEDRIJF","form.continue":"Doorgaan","form.back":"← Terug","form.submit":"Audit aanvragen","footer.desc":"Slimme systemen.","footer.cta":"Gratis audit","footer.copy":"© 2026 BMOPS","footer.location":"Caracas, Venezuela"},
+sv:{"meta.title":"BMOPS — AI-konsult","meta.desc":"Transformerar SMF med AI.","nav.servicios":"Tjänster","nav.proceso":"Process","nav.contacto":"Kontakt","hero.kicker":"AI-KONSULT","hero.line1":"Ditt företag","hero.line2":"med AI","hero.sub":"SMF med AI. Resultat från vecka ett.","hero.cta1":"Begär AI-konsultation","hero.cta2":"Se tjänster","drag.kicker":"DOLDA KOSTNADER","drag.title":"Manuellt arbete bromsar.","drag.sub":"Din verksamhet utan AI:","drag.center":"uppgifter","drag.resolution":"Bort med automatisering. ↓","services.kicker":"TJÄNSTER","services.title":"Vad vi gör","services.s1.title":"Diagnos","services.s1.desc":"Dataanalys.","services.s2.title":"AI-infrastruktur","services.s2.desc":"Komplett stack.","services.s3.title":"Prenumeration","services.s3.desc":"Underhåll.","sys.kicker":"INFRASTRUKTUR","sys.title":"Ekosystem","sys.core":"AI AUTOMATION","sys.out1":"Workflows","sys.out2":"Smart Route","sys.out3":"Realtid","sys.out4":"Insikter","engine.kicker":"INTELLIGENSMOTOR","engine.title":"Diagnos till resultat","engine.sub":"Sektor exempel:","engine.s1.title":"Analysera","engine.s2.title":"Prioritera","engine.s3.title":"Automatisera","engine.s4.title":"Förbättra","form.kicker":"DIAGNOS","form.name":"NAMN","form.email":"E-POST","form.company":"FÖRETAG","form.continue":"Fortsätt","form.back":"← Tillbaka","form.submit":"Begär granskning","footer.cta":"Gratis granskning","footer.copy":"© 2026 BMOPS","footer.location":"Caracas, Venezuela"},
+pl:{"meta.title":"BMOPS — Konsulting AI","meta.desc":"Transformacja MŚP z AI.","nav.servicios":"Usługi","nav.proceso":"Proces","nav.contacto":"Kontakt","hero.kicker":"KONSULTING AI","hero.line1":"Twoja firma","hero.line2":"z AI","hero.sub":"MŚP z AI. Wyniki od 1 tygodnia.","hero.cta1":"Poproś o konsulting AI","hero.cta2":"Usługi","drag.kicker":"UKRYTY KOSZT","drag.title":"Praca ręczna hamuje.","drag.sub":"Twoja operacja bez AI:","drag.center":"zadań","drag.resolution":"Eliminacja z automatyzacją. ↓","services.kicker":"USŁUGI","services.title":"Co robimy","services.s1.title":"Diagnoza","services.s1.desc":"Analiza danych.","services.s2.title":"Infrastruktura AI","services.s2.desc":"Kompletny stack.","services.s3.title":"Subskrypcja","services.s3.desc":"Stałe wsparcie.","sys.kicker":"INFRASTRUKTURA","sys.title":"Ekosystem","sys.core":"AI AUTOMATION","sys.out1":"Workflows","sys.out2":"Smart Route","sys.out3":"Czas rzeczywisty","sys.out4":"Insights","engine.kicker":"SILNIK INTELIGENCJI","engine.title":"Diagnoza do wyniku","engine.sub":"Przykłady sektorowe:","engine.s1.title":"Analizuj","engine.s2.title":"Priorytetyzuj","engine.s3.title":"Automatyzuj","engine.s4.title":"Ulepszaj","form.kicker":"DIAGNOZA","form.name":"IMIĘ","form.email":"EMAIL","form.company":"FIRMA","form.continue":"Kontynuuj","form.back":"← Wróć","form.submit":"Poproś o audyt","footer.cta":"Darmowy audyt","footer.copy":"© 2026 BMOPS","footer.location":"Caracas, Venezuela"},
+tr:{"meta.title":"BMOPS — YZ Danışmanlık","meta.desc":"KOBİ'leri YZ ile dönüştürüyoruz.","nav.servicios":"Hizmetler","nav.proceso":"Süreç","nav.contacto":"İletişim","hero.kicker":"YZ DANIŞMANLIĞI","hero.line1":"İşletmeniz","hero.line2":"YZ ile güçlendi","hero.sub":"KOBİ'ler YZ ile. İlk haftadan sonuç.","hero.cta1":"YZ Danışmanlığı Talep Et","hero.cta2":"Hizmetler","drag.kicker":"GİZLİ MALİYET","drag.title":"Manuel iş büyümeyi engelliyor.","drag.sub":"YZ'siz operasyonunuz:","drag.center":"görev","drag.resolution":"Otomasyonla yok olur. ↓","services.kicker":"HİZMETLER","services.title":"Ne yapıyoruz","services.s1.title":"Akıllı Teşhis","services.s1.desc":"Veri analizi.","services.s2.title":"YZ Altyapısı","services.s2.desc":"Tam stack.","services.s3.title":"Abonelik","services.s3.desc":"Sürekli bakım.","sys.kicker":"ALTYAPI","sys.title":"Ekosistem","sys.core":"YZ OTOMASYON","sys.out1":"İş Akışları","sys.out2":"Akıllı Rota","sys.out3":"Gerçek Zamanlı","sys.out4":"İçgörüler","engine.kicker":"ZEKA MOTORU","engine.title":"Teşhisten sonuca","engine.sub":"Sektör örnekleri:","engine.s1.title":"Analiz Et","engine.s2.title":"Önceliklendir","engine.s3.title":"Otomatikleştir","engine.s4.title":"İyileştir","form.kicker":"TEŞHİS","form.name":"İSİM","form.email":"E-POSTA","form.company":"ŞİRKET","form.continue":"Devam","form.back":"← Geri","form.submit":"Denetim Talep Et","footer.cta":"Ücretsiz denetim","footer.copy":"© 2026 BMOPS","footer.location":"Caracas, Venezuela"},
+ar:{"meta.title":"BMOPS — استشارات AI","meta.desc":"نحول الشركات بالذكاء الاصطناعي","nav.servicios":"الخدمات","nav.proceso":"المنهجية","nav.contacto":"اتصل","hero.kicker":"استشارات AI","hero.line1":"شركتك","hero.line2":"بالذكاء الاصطناعي","hero.sub":"تحويل الشركات بالذكاء الاصطناعي. نتائج من الأسبوع الأول.","hero.cta1":"اطلب استشارة AI","hero.cta2":"الخدمات","drag.kicker":"التكلفة المخفية","drag.title":"العمل اليدوي يعطل النمو","drag.sub":"عملياتك بدون AI:","drag.center":"مهمة","drag.resolution":"تختفي مع الأتمتة. ↓","services.kicker":"الخدمات","services.title":"ماذا نقدم","services.s1.title":"تشخيص ذكي","services.s1.desc":"تحليل البيانات.","services.s2.title":"بنية AI","services.s2.desc":"مجموعة كاملة.","services.s3.title":"اشتراك","services.s3.desc":"صيانة مستمرة.","sys.kicker":"البنية","sys.title":"النظام البيئي","sys.core":"أتمتة AI","sys.out1":"سير العمل","sys.out2":"توجيه ذكي","sys.out3":"وقت حقيقي","sys.out4":"رؤى","engine.kicker":"محرك الذكاء","engine.title":"التشخيص إلى النتيجة","engine.sub":"أمثلة قطاعية:","engine.s1.title":"تحليل","engine.s2.title":"تحديد الأولويات","engine.s3.title":"أتمتة","engine.s4.title":"تحسين","form.kicker":"تشخيص","form.name":"الاسم","form.email":"البريد","form.company":"الشركة","form.continue":"متابعة","form.back":"← رجوع","form.submit":"طلب تدقيق","footer.cta":"تدقيق مجاني","footer.copy":"© 2026 BMOPS","footer.location":"كراكاس، فنزويلا"},
+de:{"meta.title":"BMOPS — KI-Beratung","meta.desc":"KMU mit KI transformieren.","nav.servicios":"Leistungen","nav.proceso":"Prozess","nav.contacto":"Kontakt","hero.kicker":"KI-BERATUNG","hero.line1":"Ihr Unternehmen","hero.line2":"mit KI verstärkt","hero.sub":"KMU mit KI. Ergebnisse ab Woche 1.","hero.cta1":"KI-Beratung anfragen","hero.cta2":"Leistungen","drag.kicker":"VERSTECKTE KOSTEN","drag.title":"Manuelle Arbeit bremst.","drag.sub":"Ihr Betrieb ohne KI:","drag.center":"Aufgaben","drag.resolution":"Weg mit Automatisierung. ↓","services.kicker":"LEISTUNGEN","services.title":"Was wir tun","services.s1.title":"Diagnose","services.s1.desc":"Datenanalyse.","services.s2.title":"KI-Infrastruktur","services.s2.desc":"Kompletter Stack.","services.s3.title":"Abonnement","services.s3.desc":"Wartung.","sys.kicker":"INFRASTRUKTUR","sys.title":"Ökosystem","sys.core":"KI AUTOMATION","sys.out1":"Workflows","sys.out2":"Smart Route","sys.out3":"Echtzeit","sys.out4":"Einblicke","engine.kicker":"INTELLIGENZMOTOR","engine.title":"Diagnose zum Ergebnis","engine.sub":"Branchenbeispiele:","engine.s1.title":"Analysieren","engine.s2.title":"Priorisieren","engine.s3.title":"Automatisieren","engine.s4.title":"Verbessern","form.kicker":"DIAGNOSE","form.name":"NAME","form.email":"E-MAIL","form.company":"UNTERNEHMEN","form.continue":"Weiter","form.back":"← Zurück","form.submit":"Audit anfragen","footer.cta":"Kostenloser Audit","footer.copy":"© 2026 BMOPS","footer.location":"Caracas, Venezuela"},
+zh:{"meta.title":"BMOPS — AI顧問","meta.desc":"以AI轉型中小企業","nav.servicios":"服務","nav.proceso":"流程","nav.contacto":"聯絡","hero.kicker":"AI顧問","hero.line1":"您的企業","hero.line2":"AI驅動","hero.sub":"AI轉型中小企業。","hero.cta1":"請求AI諮詢","hero.cta2":"服務","drag.kicker":"隱藏成本","drag.title":"手動工作阻礙成長","drag.sub":"無AI的運營：","drag.center":"任務","drag.resolution":"自動化消除。↓","services.kicker":"服務","services.title":"我們做什麼","services.s1.title":"智慧診斷","services.s1.desc":"數據分析。","services.s2.title":"AI基礎設施","services.s2.desc":"完整技術棧。","services.s3.title":"訂閱支援","services.s3.desc":"持續維護。","sys.kicker":"基礎設施","sys.title":"生態系統","sys.core":"AI自動化","sys.out1":"工作流程","sys.out2":"智能路由","sys.out3":"即時","sys.out4":"洞察","engine.kicker":"智能引擎","engine.title":"診斷到成果","engine.sub":"行業示例：","engine.s1.title":"分析","engine.s2.title":"優先級","engine.s3.title":"自動化","engine.s4.title":"改進","form.kicker":"診斷","form.name":"姓名","form.email":"郵件","form.company":"公司","form.continue":"繼續","form.back":"← 返回","form.submit":"請求審計","footer.cta":"免費審計","footer.copy":"© 2026 BMOPS","footer.location":"加拉加斯"},
+ja:{"meta.title":"BMOPS — AIコンサル","meta.desc":"AIで中小企業を変革","nav.servicios":"サービス","nav.proceso":"プロセス","nav.contacto":"お問合せ","hero.kicker":"AIコンサル","hero.line1":"あなたのビジネス","hero.line2":"AIで強化","hero.sub":"AIで中小企業を変革。","hero.cta1":"AIコンサルを依頼","hero.cta2":"サービス","drag.kicker":"隠れたコスト","drag.title":"手動作業が成長を阻害","drag.sub":"AIなしの業務：","drag.center":"タスク","drag.resolution":"自動化で消滅。↓","services.kicker":"サービス","services.title":"私たちの仕事","services.s1.title":"診断","services.s1.desc":"データ分析。","services.s2.title":"AIインフラ","services.s2.desc":"完全スタック。","services.s3.title":"サブスク","services.s3.desc":"継続保守。","sys.kicker":"インフラ","sys.title":"エコシステム","sys.core":"AI自動化","sys.out1":"ワークフロー","sys.out2":"スマートルート","sys.out3":"リアルタイム","sys.out4":"インサイト","engine.kicker":"知能エンジン","engine.title":"診断から成果へ","engine.sub":"業界例：","engine.s1.title":"分析","engine.s2.title":"優先順位","engine.s3.title":"自動化","engine.s4.title":"改善","form.kicker":"診断","form.name":"名前","form.email":"メール","form.company":"会社","form.continue":"続行","form.back":"← 戻る","form.submit":"監査依頼","footer.cta":"無料監査","footer.copy":"© 2026 BMOPS","footer.location":"カラカス"}
+};
+
+const flags={es:"🇪🇸",en:"🇬🇧",it:"🇮🇹",fr:"🇫🇷",nl:"🇳🇱",sv:"🇸🇪",pl:"🇵🇱",tr:"🇹🇷",ar:"🇦🇪",de:"🇩🇪",zh:"🇹🇼",ja:"🇯🇵"};
+const langNames={es:"Español",en:"English",it:"Italiano",fr:"Français",nl:"Nederlands",sv:"Svenska",pl:"Polski",tr:"Türkçe",ar:"العربية",de:"Deutsch",zh:"繁體中文",ja:"日本語"};
+
+// Build lang dropdown
+const ls=document.getElementById('langSelect');
+ls.innerHTML='<button class="lang-trigger" id="langTrigger" aria-haspopup="listbox"><span id="currentFlag">🇪🇸</span><span id="currentLang">ES</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg></button><div class="lang-dropdown" id="langDropdown" role="listbox"></div>';
+const dd=document.getElementById('langDropdown');
+Object.keys(flags).forEach(l=>{const b=document.createElement('button');b.className='lang-option';b.dataset.lang=l;b.innerHTML='<span class="lang-flag">'+flags[l]+'</span>'+langNames[l];dd.appendChild(b);});
+
+function setLang(lang){
+  document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';localStorage.setItem('bmops-lang',lang);
+  document.getElementById('currentFlag').textContent=flags[lang]||'🇪🇸';
+  document.getElementById('currentLang').textContent=lang.toUpperCase();
+  document.querySelectorAll('.lang-option').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
+  document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(i18n[lang]&&i18n[lang][k]){if(el.tagName==='META')el.setAttribute('content',i18n[lang][k]);else el.textContent=i18n[lang][k];}});
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{const k=el.dataset.i18nPlaceholder;if(i18n[lang]&&i18n[lang][k])el.placeholder=i18n[lang][k];});
+}
+
+const lt=document.getElementById('langTrigger');
+lt.addEventListener('click',e=>{e.stopPropagation();ls.classList.toggle('open');lt.setAttribute('aria-expanded',ls.classList.contains('open'));});
+document.addEventListener('click',()=>{ls.classList.remove('open');lt.setAttribute('aria-expanded','false');});
+document.querySelectorAll('.lang-option').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();setLang(b.dataset.lang);ls.classList.remove('open');lt.setAttribute('aria-expanded','false');}));
+setLang(localStorage.getItem('bmops-lang')||'es');
+
+// --- Service tabs ---
+document.querySelectorAll('.svc-tab').forEach(t=>t.addEventListener('click',function(){
+  document.querySelectorAll('.svc-tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.svc-panel').forEach(x=>x.classList.remove('active'));
+  this.classList.add('active');
+  document.getElementById('panel-'+this.dataset.svc).classList.add('active');
+  if(this.dataset.svc==='infra'){
+    const target=document.querySelector('#ecosistema, [data-section="ecosistema"]') || document.querySelector('.sys-orbit');
+    if(target)target.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}));
+
+// --- Drag nodes ---
+let activeNode=null;
+document.querySelectorAll('.drag-node').forEach(n=>n.addEventListener('click',function(e){e.stopPropagation();if(activeNode===this){this.classList.remove('popped');activeNode=null;return}if(activeNode)activeNode.classList.remove('popped');this.classList.add('popped');activeNode=this;}));
+document.addEventListener('click',()=>{if(activeNode){activeNode.classList.remove('popped');activeNode=null;}});
+
+// --- Sector examples ---
+const examples={
+  salud:{
+    analyze:[{title:"Triaje automático de pacientes",desc:"NLP clasifica urgencia desde formularios y chats"},{title:"Extracción de datos clínicos",desc:"OCR + IA extrae info de historiales escaneados"},{title:"Análisis de patrones epidemiológicos",desc:"Detección temprana de brotes desde datos agregados"}],
+    prioritize:[{title:"Priorización de citas por gravedad",desc:"Algoritmo asigna slots según urgencia clínica"},{title:"Alertas de pacientes en riesgo",desc:"ML predice reingresos y genera notificaciones"},{title:"Optimización de recursos médicos",desc:"Asignación dinámica de personal según demanda"}],
+    automate:[{title:"Recordatorios automáticos de citas",desc:"WhatsApp/SMS automáticos reducen ausencias 40%"},{title:"Generación de recetas digitales",desc:"IA sugiere y valida recetas con farmacovigilancia"},{title:"Reportes automáticos a aseguradoras",desc:"Extracción y envío de datos a sistemas de seguros"}],
+    improve:[{title:"Dashboard de KPIs clínicos",desc:"Tiempos de espera, satisfacción, reingresos en tiempo real"},{title:"Aprendizaje continuo de protocolos",desc:"El sistema aprende de cada interacción médico-paciente"},{title:"Predicción de demanda estacional",desc:"Anticipa picos de consultas y ajusta personal"}]
+  },
+  finanzas:{
+    analyze:[{title:"Detección de anomalías en transacciones",desc:"IA identifica patrones sospechosos en tiempo real"},{title:"Análisis de riesgo crediticio",desc:"ML evalúa perfil de riesgo con datos alternativos"},{title:"Conciliación bancaria automática",desc:"Matching inteligente de movimientos vs extractos"}],
+    prioritize:[{title:"Cobranza inteligente",desc:"Prioriza deudores por probabilidad de pago y monto"},{title:"Alertas de cashflow crítico",desc:"Predicción de déficits con 30 días de anticipación"},{title:"Clasificación de gastos fiscales",desc:"Categorización automática para optimización fiscal"}],
+    automate:[{title:"Facturación y cobro recurrente",desc:"Emisión, envío y seguimiento automático"},{title:"Reportes regulatorios automatizados",desc:"Generación de reportes para entes reguladores"},{title:"Cierre contable mensual asistido",desc:"IA prepara asientos y detecta discrepancias"}],
+    improve:[{title:"Forecasting financiero adaptativo",desc:"Modelos que mejoran con cada ciclo contable"},{title:"Optimización de inversiones",desc:"Sugerencias de inversión basadas en ML"},{title:"Dashboard financiero ejecutivo",desc:"Métricas clave y proyecciones actualizadas"}]
+  },
+  ops:{
+    analyze:[{title:"Mapeo de procesos operativos",desc:"Process mining para detectar ineficiencias"},{title:"Análisis de cuellos de botella",desc:"Identifica dónde se acumulan las tareas"},{title:"Medición de productividad por equipo",desc:"KPIs automáticos sin planillas manuales"}],
+    prioritize:[{title:"Priorización de órdenes de trabajo",desc:"Algoritmo asigna urgencia según SLA y recursos"},{title:"Gestión de inventario inteligente",desc:"Predicción de stock mínimo y reposición automática"},{title:"Escalamiento automático de incidencias",desc:"Ruteo inteligente según tipo y criticidad"}],
+    automate:[{title:"Workflows de aprobación",desc:"Circuitos de aprobación con reglas de negocio"},{title:"Generación de reportes operativos",desc:"Informes diarios/semanales sin intervención manual"},{title:"Sincronización entre sistemas",desc:"ERP, WMS, CRM conectados bidireccionalmente"}],
+    improve:[{title:"Mejora continua con métricas",desc:"Dashboard de eficiencia operativa en evolución"},{title:"Predicción de capacidad",desc:"Anticipa necesidades de personal y recursos"},{title:"Automatización progresiva",desc:"Nuevos procesos se automatizan cada mes"}]
+  },
+  ecom:{
+    analyze:[{title:"Análisis de comportamiento de compra",desc:"Segmentación de clientes por patrones"},{title:"Detección de carritos abandonados",desc:"Identifica patrones de abandono en tiempo real"},{title:"Análisis de sentimiento en reseñas",desc:"NLP clasifica feedback positivo/negativo"}],
+    prioritize:[{title:"Priorización de leads por intención",desc:"Scoring predictivo de probabilidad de compra"},{title:"Recomendaciones personalizadas",desc:"Productos sugeridos según historial y navegación"},{title:"Gestión de devoluciones inteligente",desc:"Clasifica y prioriza según política y cliente"}],
+    automate:[{title:"Emails de recuperación de carrito",desc:"Secuencias automáticas con descuentos dinámicos"},{title:"Actualización de inventario multicanal",desc:"Sincronización stock tienda online + física"},{title:"Atención al cliente 24/7",desc:"Chatbot con acceso a pedidos, devoluciones y FAQs"}],
+    improve:[{title:"Optimización de precios dinámicos",desc:"ML ajusta precios según demanda y competencia"},{title:"Predicción de tendencias de compra",desc:"Anticipa productos estrella por temporada"},{title:"Dashboard de ventas multicanal",desc:"Métricas unificadas de todos los canales"}]
+  },
+  construccion:{
+    analyze:[{title:"Digitalización de planos y documentos",desc:"OCR + IA extrae datos de planos escaneados"},{title:"Análisis de costes de materiales",desc:"Predicción de variaciones de precios"},{title:"Seguimiento de avance de obra",desc:"Comparación plan vs realidad con datos de campo"}],
+    prioritize:[{title:"Planificación de recursos",desc:"Asignación óptima de cuadrillas y maquinaria"},{title:"Gestión de subcontratistas",desc:"Priorización por criticidad de tarea y disponibilidad"},{title:"Alertas de retrasos",desc:"Predicción de desviaciones del cronograma"}],
+    automate:[{title:"Generación de reportes de avance",desc:"Informes automáticos para cliente e internos"},{title:"Control de inventario en obra",desc:"Pedidos automáticos cuando el stock baja del mínimo"},{title:"Certificaciones y compliance",desc:"Documentación automática de seguridad y normativa"}],
+    improve:[{title:"Lecciones aprendidas automáticas",desc:"El sistema registra desviaciones y sugiere mejoras"},{title:"Optimización de presupuestos",desc:"ML ajusta estimaciones según datos históricos"},{title:"Dashboard de proyectos",desc:"Visibilidad total de avance, costes y riesgos"}]
+  },
+  inmo:{
+    analyze:[{title:"Valoración automática de propiedades",desc:"ML con datos de mercado, ubicación y características"},{title:"Análisis de leads inmobiliarios",desc:"Clasificación de compradores/vendedores potenciales"},{title:"Segmentación de cartera",desc:"Agrupación de propiedades por rentabilidad y rotación"}],
+    prioritize:[{title:"Matching propiedad-cliente",desc:"IA empareja propiedades con compradores ideales"},{title:"Priorización de visitas",desc:"Ordena visitas por probabilidad de cierre"},{title:"Gestión de renovaciones",desc:"Predicción de contratos próximos a vencer"}],
+    automate:[{title:"Publicación automática en portales",desc:"Multi-listing en Idealista, Fotocasa, etc."},{title:"Seguimiento de leads automatizado",desc:"Secuencias de email/WhatsApp según interés"},{title:"Generación de contratos",desc:"Documentos legales con datos precargados"}],
+    improve:[{title:"Predicción de precios de mercado",desc:"Modelos que se actualizan con cada transacción"},{title:"Análisis de rentabilidad",desc:"ROI por propiedad con datos reales actualizados"},{title:"Dashboard de agente inmobiliario",desc:"Pipeline, comisiones y KPIs en tiempo real"}]
+  }
+};
+
+let currentSector='salud',currentStep=0;
+
+function renderExamples(sector,step){
+  const box=document.getElementById('examplesBox');
+  const d=examples[sector][['analyze','prioritize','automate','improve'][step]];
+  const labels={'analyze':'Analizar','prioritize':'Priorizar','automate':'Automatizar','improve':'Mejorar'};
+  let h='<h4>🔹 '+labels[['analyze','prioritize','automate','improve'][step]]+' — Sector: '+sector.toUpperCase()+'</h4>';
+  d.forEach((ex,i)=>{h+='<div class="example-item"><div class="example-num">'+(i+1)+'</div><div><strong>'+ex.title+'</strong><div style="font-size:11px;color:#71717a;margin-top:2px">'+ex.desc+'</div></div></div>';});
+  box.innerHTML=h;
+}
+
+// --- Smooth scroll for ALL internal links ---
+document.addEventListener('click',function(e){
+  const link=e.target.closest('a[href^="#"]');
+  if(!link)return;
+  const id=link.getAttribute('href');
+  if(!id||id==='#')return;
+  const target=document.querySelector(id);
+  if(target){
+    e.preventDefault();
+    target.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+});
+
+// Sector pills — event delegation (robust against dynamic loading)
+document.addEventListener('click',function(e){
+  const pill=e.target.closest('.sector-pill');
+  if(!pill)return;
+  e.preventDefault();
+  document.querySelectorAll('.sector-pill').forEach(x=>x.classList.remove('active'));
+  pill.classList.add('active');
+  currentSector=pill.dataset.sector;
+  renderExamples(currentSector,currentStep);
+});
+
+// Engine steps
+document.querySelectorAll('.engine-step').forEach((s,i)=>s.addEventListener('click',function(){
+  document.querySelectorAll('.engine-step').forEach(x=>x.classList.remove('active'));
+  this.classList.add('active');currentStep=i;renderExamples(currentSector,currentStep);
+}));
+
+// Init examples
+renderExamples('salud',0);
+
+// --- Form ---
+let selectedAreas=[],selectedIssues=[];
+document.addEventListener('click',function(e){
+  const chip=e.target.closest('#chipArea .chip');
+  if(chip){chip.classList.toggle('selected');selectedAreas=Array.from(document.querySelectorAll('#chipArea .chip.selected')).map(c=>c.dataset.val);return;}
+  const chip2=e.target.closest('#chipIssue .chip');
+  if(chip2){chip2.classList.toggle('selected');selectedIssues=Array.from(document.querySelectorAll('#chipIssue .chip.selected')).map(c=>c.dataset.val);}
+});
+function goStep2(){const email=document.querySelector('input[name="email"]');if(!email.value||!email.value.includes('@')||!email.value.includes('.')){email.style.borderColor='#ef4444';email.focus();setTimeout(()=>email.style.borderColor='',2000);return}email.style.borderColor='';document.getElementById('step1').classList.remove('active');document.getElementById('step2').classList.add('active');document.getElementById('stepNum2').classList.add('active');}
+function goStep1(){document.getElementById('step2').classList.remove('active');document.getElementById('step1').classList.add('active');document.getElementById('stepNum2').classList.remove('active');}
+function submitForm(){document.getElementById('diagnosticField').value=JSON.stringify({areas:selectedAreas,issues:selectedIssues,extra:document.getElementById('extraContext').value});}
+</script>
+</body>
+</html>
