@@ -87,11 +87,55 @@ loader.load('model.glb',gltf=>{
   model.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true}});
   scene.add(model);
   document.getElementById('loader').classList.add('hidden');
+  initAudio();
   },remaining);
 },p=>{
   const pct=Math.round(p.loaded/p.total*100);
   document.getElementById('pctVal').textContent=pct;
 });
+
+// === AMBIENT AUDIO ===
+let audioCtx=null,ambientOn=false;
+function initAudio(){
+  if(ambientOn)return;
+  try{
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const now=audioCtx.currentTime;
+
+    // Deep bass drone
+    const osc1=audioCtx.createOscillator();
+    osc1.type='sine';osc1.frequency.setValueAtTime(55,now);
+    const gain1=audioCtx.createGain();gain1.gain.setValueAtTime(0,now);
+    gain1.gain.linearRampToValueAtTime(.06,now+2);
+    osc1.connect(gain1);gain1.connect(audioCtx.destination);osc1.start();
+
+    // Harmonic layer
+    const osc2=audioCtx.createOscillator();
+    osc2.type='sine';osc2.frequency.setValueAtTime(82.4,now);
+    osc2.detune.setValueAtTime(5,now);
+    const gain2=audioCtx.createGain();gain2.gain.setValueAtTime(0,now);
+    gain2.gain.linearRampToValueAtTime(.03,now+3);
+    osc2.connect(gain2);gain2.connect(audioCtx.destination);osc2.start();
+
+    // High shimmer
+    const osc3=audioCtx.createOscillator();
+    osc3.type='sine';osc3.frequency.setValueAtTime(440,now);
+    osc3.detune.setValueAtTime(-12,now);
+    const gain3=audioCtx.createGain();gain3.gain.setValueAtTime(0,now);
+    gain3.gain.linearRampToValueAtTime(.015,now+4);
+    const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(600,now);
+    osc3.connect(lp);lp.connect(gain3);gain3.connect(audioCtx.destination);osc3.start();
+
+    // Subtle LFO modulation
+    const lfo=audioCtx.createOscillator();
+    lfo.type='sine';lfo.frequency.setValueAtTime(.15,now);
+    const lfoGain=audioCtx.createGain();lfoGain.gain.setValueAtTime(3,now);
+    lfo.connect(lfoGain);lfoGain.connect(osc2.detune);lfo.start();
+
+    ambientOn=true;
+  }catch(e){}
+}
+document.addEventListener('click',()=>{if(!ambientOn&&audioCtx)initAudio()},{once:false});
 
 function animate(){
   requestAnimationFrame(animate);
