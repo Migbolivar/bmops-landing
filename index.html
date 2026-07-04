@@ -3,50 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>DATA · AI · AUTOMATION — Miguel Bolivar</title>
-<meta name="description" content="Miguel Bolivar — Data Analyst & AI Automation Specialist">
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>bmops.tech</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#030308;font-family:'Geist',system-ui,sans-serif;overflow:hidden;height:100vh;width:100vw}
+body{background:#030308;overflow:hidden;height:100vh;width:100vw}
 canvas{position:fixed;top:0;left:0}
-.loader{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#030308;transition:opacity .6s}
+.loader{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#030308;transition:opacity .6s;flex-direction:column}
 .loader.hidden{opacity:0;pointer-events:none}
 .loader .ring{width:40px;height:40px;border:2px solid #1a1a2e;border-top-color:#a78bfa;border-radius:50%;animation:spin .8s linear infinite}
+.loader p{color:#52525b;font-size:12px;margin-top:12px;font-family:system-ui,sans-serif}
 @keyframes spin{to{transform:rotate(360deg)}}
-.overlay{position:fixed;inset:0;z-index:10;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.title-block{text-align:center}
-.title-block .brand{font-size:clamp(36px,9vw,88px);font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1;text-shadow:0 2px 40px rgb(0 0 0/.8)}
-.title-block .brand span{background:linear-gradient(135deg,#a78bfa 20%,#34d399 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.title-block .sub{font-family:'Geist Mono',monospace;font-size:clamp(11px,1.5vw,14px);letter-spacing:.45em;color:#a78bfa;margin-top:14px;text-transform:uppercase;text-shadow:0 2px 20px rgb(0 0 0/.6)}
-.nav-bar{position:fixed;bottom:40px;z-index:20;display:flex;gap:14px;left:50%;transform:translateX(-50%)}
-.nav-btn{pointer-events:all;padding:14px 32px;border-radius:30px;font-size:15px;font-weight:600;cursor:pointer;border:1px solid rgb(255 255 255/.12);background:rgb(0 0 0/.5);color:#e4e4e7;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);transition:all .35s;font-family:'Geist',sans-serif;text-decoration:none;white-space:nowrap;letter-spacing:.01em}
-.nav-btn:hover{background:rgb(255 255 255/.1);border-color:rgb(255 255 255/.25);transform:translateY(-2px)}
-.nav-btn.accent{background:linear-gradient(135deg,#6366f1,#a78bfa);border-color:transparent;color:#fff}
-.nav-btn.accent:hover{box-shadow:0 10px 40px rgb(167 139 250/.4);transform:translateY(-3px)}
-.hint{position:fixed;bottom:130px;z-index:10;text-align:center;width:100%;pointer-events:none}
-.hint p{font-size:11px;color:rgb(255 255 255/.3);letter-spacing:.2em;text-transform:uppercase}
-@media(max-width:500px){.nav-bar{flex-direction:column;align-items:center;bottom:28px;gap:8px}.nav-btn{padding:12px 24px;font-size:14px}}
 </style>
 </head>
 <body>
-
-<div class="loader" id="loader"><div class="ring"></div></div>
+<div class="loader" id="loader"><div class="ring"></div><p>Loading 3D...</p></div>
 <canvas id="c"></canvas>
-
-<div class="overlay">
-  <div class="title-block">
-    <h1 class="brand"><span>DATA</span> · AI · AUTOMATION</h1>
-    <p class="sub">Miguel Bolivar</p>
-  </div>
-</div>
-
-<div class="hint"><p>🖱️ Arrastra · 📜 Zoom · 🔍 Explora</p></div>
-
-<div class="nav-bar">
-  <a href="https://miguelbolivar-portafolio.netlify.app" class="nav-btn">📂 Portafolio CV</a>
-  <a href="https://ai.bmops.tech" class="nav-btn accent">💼 Consultoría BMOPS</a>
-</div>
 
 <script type="importmap">
 {"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
@@ -56,63 +27,38 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
-import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
-import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
-import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 const canvas=document.getElementById('c');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color('#030308');
-scene.fog=new THREE.Fog('#030308',8,30);
+scene.fog=new THREE.Fog('#030308',6,25);
 
 const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,.5,50);
 camera.position.set(4,3,8);
 
 const controls=new OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true;controls.dampingFactor=.06;
+controls.enableDamping=true;controls.dampingFactor=.08;
 controls.target.set(0,1.5,0);
-controls.minDistance=2;controls.maxDistance=15;
-controls.maxPolarAngle=Math.PI*.6;controls.minPolarAngle=.15;
+controls.minDistance=2;controls.maxDistance=12;
+controls.maxPolarAngle=Math.PI*.6;
+controls.autoRotate=true;controls.autoRotateSpeed=.5;
 controls.update();
 
-const composer=new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene,camera));
-const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.4,.3,.5);
-bloom.threshold=.2;bloom.strength=.4;bloom.radius=.3;
-composer.addPass(bloom);
+scene.add(new THREE.AmbientLight('#1a1a3e',.7));
+const key=new THREE.DirectionalLight('#ffffff',2.5);key.position.set(8,12,6);scene.add(key);
+const rim1=new THREE.PointLight('#a78bfa',5,12);rim1.position.set(-4,3,-3);scene.add(rim1);
+const rim2=new THREE.PointLight('#34d399',3,10);rim2.position.set(5,2,4);scene.add(rim2);
 
-// Lights
-scene.add(new THREE.AmbientLight('#1a1a3e',.6));
-const key=new THREE.DirectionalLight('#ffffff',3);key.position.set(8,10,6);
-key.castShadow=true;key.shadow.mapSize.set(2048,2048);
-key.shadow.camera.near=.5;key.shadow.camera.far=30;
-scene.add(key);
-const rim1=new THREE.PointLight('#a78bfa',6,12);rim1.position.set(-4,3,-3);scene.add(rim1);
-const rim2=new THREE.PointLight('#34d399',4,10);rim2.position.set(5,2,4);scene.add(rim2);
-
-// Floor
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(30,30),
   new THREE.MeshStandardMaterial({color:'#060610',roughness:.85,metalness:.2}));
 floor.rotation.x=-Math.PI/2;floor.position.y=-3;floor.receiveShadow=true;scene.add(floor);
 
-// Particles
-const pGeo=new THREE.BufferGeometry();
-const pCount=400;
-const pPos=new Float32Array(pCount*3);
-for(let i=0;i<pCount;i++){pPos[i*3]=(Math.random()-.5)*12;pPos[i*3+1]=Math.random()*8-2;pPos[i*3+2]=(Math.random()-.5)*10}
-pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
-const pMat=new THREE.PointsMaterial({size:.02,color:'#a78bfa',blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:.5});
-const particles=new THREE.Points(pGeo,pMat);scene.add(particles);
-
-// Load model
 const loader=new GLTFLoader();
 const draco=new DRACOLoader();
 draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
@@ -120,34 +66,28 @@ loader.setDRACOLoader(draco);
 
 loader.load('model.glb',gltf=>{
   const model=gltf.scene;
-  // Center and scale
   const box=new THREE.Box3().setFromObject(model);
   const size=box.getSize(new THREE.Vector3());
   const center=box.getCenter(new THREE.Vector3());
   const scale=6/Math.max(size.x,size.y,size.z);
   model.scale.setScalar(scale);
-  model.position.set(-center.x*scale, -center.y*scale+2.5, -center.z*scale);
+  model.position.set(-center.x*scale,-center.y*scale+2.5,-center.z*scale);
   model.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true}});
   scene.add(model);
   document.getElementById('loader').classList.add('hidden');
 },p=>{
-  const pct=Math.round(p.loaded/p.total*100);
-  document.getElementById('loader').innerHTML=`<div class="ring"></div><p style="color:#52525b;font-size:12px;margin-top:12px">${pct}%</p>`;
-},e=>{console.error(e);document.getElementById('loader').classList.add('hidden')});
+  document.getElementById('loader').innerHTML=`<div class="ring"></div><p>${Math.round(p.loaded/p.total*100)}%</p>`;
+});
 
-// Animate
 function animate(){
   requestAnimationFrame(animate);
   controls.update();
-  particles.rotation.y+=.0005;
-  particles.rotation.x+=.0003;
-  composer.render();
+  renderer.render(scene,camera);
 }
 animate();
-
 window.addEventListener('resize',()=>{
   camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);
+  renderer.setSize(innerWidth,innerHeight);
 });
 </script>
 </body>
